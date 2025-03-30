@@ -24,11 +24,11 @@ namespace server.src {
         public FlashDbContext(DbContextOptions<FlashDbContext> options) : base(options) { }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder) {
+            
             modelBuilder.Entity<DbTask1Text>(entity => {
                 entity.ToTable("texts", "task1");
                 entity.HasKey(e => e.Id).HasName("texts_pkey");
-                entity.Property(e => e.Id).HasColumnName("id");
-                entity.Property(e => e.Theme).HasColumnName("theme").HasColumnType("task1.theme");
+                entity.Property(e => e.Theme).HasColumnName("theme").HasMaxLength(50);
                 entity.Property(e => e.Text).HasColumnName("text");
             });
             modelBuilder.Entity<DbTask1Question>(entity => {
