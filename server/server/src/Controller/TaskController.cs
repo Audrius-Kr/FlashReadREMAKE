@@ -3,6 +3,7 @@ using server.src;
 using server.UserNamespace;
 using System.Security.Claims;
 using server.src.Task1;
+using server.src.Achievements;
 namespace server.Controller {
     [Route("api")]
 
@@ -10,9 +11,12 @@ namespace server.Controller {
     public class TaskController : ControllerBase {
         private readonly FlashDbContext _context;
         private readonly UserHandler _userHandler;
-        public TaskController(FlashDbContext context, UserHandler userHandler) {
+        private readonly AchievementService _achievementService;
+        public TaskController(FlashDbContext context, UserHandler userHandler, AchievementService achievementService) {
             _context = context;
             _userHandler = userHandler;
+            _achievementService = achievementService;
+            
         }
         [HttpPost("GetTask")]
         public ITaskResponse PostGetTask(TaskRequest req) {
@@ -33,6 +37,7 @@ namespace server.Controller {
             {
                 System.Console.WriteLine("Saving task result");
                 await _userHandler.SaveTaskResult(userEmail, req.Session, taskId, score, req.SelectedVariants);
+                await _achievementService.CheckFirstGameAchievementAsync(userEmail);
             }
             return checkAns;
         }
@@ -47,6 +52,7 @@ namespace server.Controller {
             {
                 System.Console.WriteLine("Saving task result");
                 await _userHandler.SaveTaskResult(userEmail, 0, taskId, score, null);
+                await _achievementService.CheckFirstGameAchievementAsync(userEmail);
             }
             else {
                 return NotFound("User not found.");
