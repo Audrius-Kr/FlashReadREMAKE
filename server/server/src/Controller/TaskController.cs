@@ -19,8 +19,16 @@ namespace server.Controller {
             
         }
         [HttpPost("GetTask")]
-        public ITaskResponse PostGetTask(TaskRequest req) {
+        public async Task<ITaskResponse> PostGetTask(TaskRequest req) {
+            var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
+            if (!string.IsNullOrEmpty(userEmail))
+            {
+                await _achievementService.CheckFirstGameStartedAchievementAsync(userEmail);
+                await _achievementService.CheckGameModesStartedAchievementAsync(userEmail, req.TaskId);
+
+            }
             ITask task = ITask.GetTaskFromTaskId(req.TaskId, _context);
+            
             return task.GetResponse(req);
         }
         [HttpPost("GetTaskAnswer")]
@@ -37,7 +45,6 @@ namespace server.Controller {
             {
                 System.Console.WriteLine("Saving task result");
                 await _userHandler.SaveTaskResult(userEmail, req.Session, taskId, score, req.SelectedVariants);
-                await _achievementService.CheckFirstGameAchievementAsync(userEmail);
                 await _achievementService.CheckGameModesAchievementAsync(userEmail, taskId);
             }
             return checkAns;
@@ -53,8 +60,6 @@ namespace server.Controller {
             {
                 System.Console.WriteLine("Saving task result");
                 await _userHandler.SaveTaskResult(userEmail, 0, taskId, score, null);
-                await _achievementService.CheckFirstGameAchievementAsync(userEmail);
-                await _achievementService.CheckGameModesAchievementAsync(userEmail, taskId);
             }
             else {
                 return NotFound("User not found.");

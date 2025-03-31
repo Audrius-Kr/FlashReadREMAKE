@@ -18,7 +18,7 @@ namespace server.src.Achievements
             {
                 Id = 1,
                 Name = "First Blood",
-                Description = "Complete your first game.",
+                Description = "Start your first game.",
                 TotalRequired = 1,
                 Progress = 0,
                 IsUnlocked = false
@@ -66,7 +66,99 @@ namespace server.src.Achievements
 
             return result;
         }
+        public async Task CheckFirstGameStartedAchievementAsync(string userId)
+        {
+            var firstBloodId = 1;
+            var existingAchievement = await _context.UserAchievements
+                .FirstOrDefaultAsync(ua => ua.UserId == userId && ua.AchievementId == firstBloodId);
+                
+            if (existingAchievement == null)
+            {
+                var userAchievement = new UserAchievement
+                {
+                    UserId = userId,
+                    AchievementId = firstBloodId,
+                    Progress = 1,
+                    IsUnlocked = true,
+                    UnlockedAt = DateTime.UtcNow
+                };
 
+                _context.UserAchievements.Add(userAchievement);
+                await _context.SaveChangesAsync();
+            }
+            else if (!existingAchievement.IsUnlocked)
+            {
+                existingAchievement.Progress = 1;
+                existingAchievement.IsUnlocked = true;
+                existingAchievement.UnlockedAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+            }
+        }
+        
+        public async Task CheckGameModesStartedAchievementAsync(string userId, int taskId)
+        {
+            var jackOfAllTradesId = 2;
+            
+            // Get existing achievement record if it exists
+            var existingAchievement = await _context.UserAchievements
+                .FirstOrDefaultAsync(ua => ua.UserId == userId && ua.AchievementId == jackOfAllTradesId);
+            
+            // Track which game modes have been started
+            HashSet<int> startedModes = new HashSet<int>();
+            
+            if (existingAchievement != null)
+            {
+                // If we already have an achievement record, get the list of started modes from a separate table
+                // or parse it from a stored string field if you have one
+                
+                // For now, we'll infer progress from the Progress field
+                // Assuming Progress represents the number of unique modes started
+                for (int i = 1; i <= existingAchievement.Progress; i++)
+                {
+                    if (i != taskId) // Don't add the current task yet
+                    {
+                        startedModes.Add(i);
+                    }
+                }
+            }
+            
+            // Add the current task
+            startedModes.Add(taskId);
+            
+            int progress = startedModes.Count;
+            bool isComplete = progress >= 3; // 3 game modes
+            
+            if (existingAchievement == null)
+            {
+                // Create new achievement record
+                var userAchievement = new UserAchievement
+                {
+                    UserId = userId,
+                    AchievementId = jackOfAllTradesId,
+                    Progress = progress,
+                    IsUnlocked = isComplete,
+                    UnlockedAt = isComplete ? DateTime.UtcNow : DateTime.MaxValue
+                };
+                
+                _context.UserAchievements.Add(userAchievement);
+                await _context.SaveChangesAsync();
+            }
+            else if (!existingAchievement.IsUnlocked)
+            {
+                // Update existing achievement
+                existingAchievement.Progress = progress;
+                
+                // Check if all game modes have been started now
+                if (isComplete)
+                {
+                    existingAchievement.IsUnlocked = true;
+                    existingAchievement.UnlockedAt = DateTime.UtcNow;
+                }
+                
+                await _context.SaveChangesAsync();
+            }
+            // If achievement is already unlocked, do nothing
+        }
         public async Task CheckFirstGameAchievementAsync(string userId)
         {
             var firstBloodId = 1;

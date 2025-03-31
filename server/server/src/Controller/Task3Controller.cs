@@ -20,12 +20,29 @@ namespace server.Controller {
             _achievementService = achievementService;
         }
         [HttpPost("CheckSecretDoorCode")]
-        public Task3EndpointHandler<Task3DoorCodeResponse> PostGetTask(Task3EndpointHandler<Task3DoorCodeRequest> req) {
+        public async Task<Task3EndpointHandler<Task3DoorCodeResponse>> PostGetTask(Task3EndpointHandler<Task3DoorCodeRequest> req) {
+            var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
+            if (!string.IsNullOrEmpty(userEmail))
+            {
+                // Check for first game achievement when task3 starts
+                await _achievementService.CheckFirstGameStartedAchievementAsync(userEmail);
+                await _achievementService.CheckGameModesStartedAchievementAsync(userEmail, 3);
+
+                
+            }
             return req.GetResponse<Task3DoorCodeResponse>();
         }
         [HttpPost("GetBookHints")]
-        public Task3EndpointHandler<Task3BookHintResponse> PostGetTask(Task3EndpointHandler<Task3BookHintRequest> req) {
+        public async Task<Task3EndpointHandler<Task3BookHintResponse>> PostGetTask(Task3EndpointHandler<Task3BookHintRequest> req) {
             req.TaskVersion = new Task3HintGenerator().GenerateTaskVersion();
+            var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
+            if (!string.IsNullOrEmpty(userEmail))
+            {
+                // Check for first game achievement when task3 starts
+                await _achievementService.CheckFirstGameStartedAchievementAsync(userEmail);
+                await _achievementService.CheckGameModesStartedAchievementAsync(userEmail, 3);
+
+            }
             return req.GetResponse<Task3BookHintResponse>();
         }
         [HttpPost("SaveTask3TimeTaken")]
@@ -43,8 +60,6 @@ namespace server.Controller {
             if (string.IsNullOrEmpty(userEmail) == false) {
                 System.Console.WriteLine("Saving task result");
                 await _userHandler.SaveTaskResult(userEmail, 0, 3, score, null);
-                await _achievementService.CheckFirstGameAchievementAsync(userEmail);
-                await _achievementService.CheckGameModesAchievementAsync(userEmail, 3);
             }
             else {
                 return NotFound("failure");
