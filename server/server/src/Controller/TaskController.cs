@@ -38,6 +38,7 @@ namespace server.Controller {
                 System.Console.WriteLine("Saving task result");
                 await _userHandler.SaveTaskResult(userEmail, req.Session, taskId, score, req.SelectedVariants);
                 await _achievementService.CheckFirstGameAchievementAsync(userEmail);
+                await _achievementService.CheckGameModesAchievementAsync(userEmail, taskId);
             }
             return checkAns;
         }
@@ -53,6 +54,7 @@ namespace server.Controller {
                 System.Console.WriteLine("Saving task result");
                 await _userHandler.SaveTaskResult(userEmail, 0, taskId, score, null);
                 await _achievementService.CheckFirstGameAchievementAsync(userEmail);
+                await _achievementService.CheckGameModesAchievementAsync(userEmail, taskId);
             }
             else {
                 return NotFound("User not found.");

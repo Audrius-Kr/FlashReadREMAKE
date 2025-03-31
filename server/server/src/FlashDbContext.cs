@@ -5,6 +5,7 @@ using server.src.Task2;
 using server.UserNamespace;
 using server.src.Settings;
 using server.Exceptions;
+using server.src.Achievements;
 namespace server.src {
     public class FlashDbContext : Microsoft.EntityFrameworkCore.DbContext
     {
@@ -22,6 +23,8 @@ namespace server.src {
         public DbSet<DbLogs> Logs { get; set; }
         public DbSet<DbGlobalChat> GlobalChats { get; set; }
         public FlashDbContext(DbContextOptions<FlashDbContext> options) : base(options) { }
+        public DbSet<UserAchievement> UserAchievements { get; set; }    
+        
 
         protected override void OnModelCreating(ModelBuilder modelBuilder) {
             
@@ -128,6 +131,15 @@ namespace server.src {
                 entity.Property(e => e.ChatText).HasColumnName("chat_text");
                 entity.Property(e => e.Author).HasColumnName("author");
                 entity.Property(e => e.WrittenAt).HasColumnName("written_at");
+            });
+            modelBuilder.Entity<UserAchievement>(entity => {
+                entity.ToTable("user_achievements", "users");
+                entity.HasKey(e => new { e.UserId, e.AchievementId });
+                entity.Property(e => e.UserId).HasColumnName("user_id");
+                entity.Property(e => e.AchievementId).HasColumnName("achievement_id");
+                entity.Property(e => e.Progress).HasColumnName("progress");
+                entity.Property(e => e.IsUnlocked).HasColumnName("is_unlocked");
+                entity.Property(e => e.UnlockedAt).HasColumnName("unlocked_at");
             });
         }
     }

@@ -22,6 +22,15 @@ namespace server.src.Achievements
                 TotalRequired = 1,
                 Progress = 0,
                 IsUnlocked = false
+            },
+            new Achievement
+            {
+                Id = 2,
+                Name = "Jack of All Trades",
+                Description = "Try every game mode.",
+                TotalRequired = 2,
+                Progress = 0,
+                IsUnlocked = false
             }
         };
 
@@ -84,6 +93,55 @@ namespace server.src.Achievements
                 existingAchievement.UnlockedAt = DateTime.UtcNow;
                 await _context.SaveChangesAsync();
             }
+        }
+
+        public async Task CheckGameModesAchievementAsync(string userId, int taskId)
+        {
+            var jackOfAllTradesId = 2;
+  
+            var existingAchievement = await _context.UserAchievements
+                .FirstOrDefaultAsync(ua => ua.UserId == userId && ua.AchievementId == jackOfAllTradesId);
+            
+            var playedTaskIds = await _context.UserTaskHistories
+                .Where(h => h.Id.StartsWith(userId))
+                .Select(h => h.TaskId)
+                .Distinct()
+                .ToListAsync();
+
+            if (!playedTaskIds.Contains(taskId))
+            {
+                playedTaskIds.Add(taskId);
+            }
+            
+            int progress = playedTaskIds.Count;
+            bool isComplete = progress >= 3; 
+            
+            if (existingAchievement == null)
+            {
+                var userAchievement = new UserAchievement
+                {
+                    UserId = userId,
+                    AchievementId = jackOfAllTradesId,
+                    Progress = progress,
+                    IsUnlocked = isComplete,
+                    UnlockedAt = isComplete ? DateTime.UtcNow : DateTime.MaxValue
+                };
+                
+                _context.UserAchievements.Add(userAchievement);
+                await _context.SaveChangesAsync();
+            }
+            else if (!existingAchievement.IsUnlocked)
+            {
+                existingAchievement.Progress = progress;
+                
+                if (isComplete)
+                {
+                    existingAchievement.IsUnlocked = true;
+                    existingAchievement.UnlockedAt = DateTime.UtcNow;
+                }
+                await _context.SaveChangesAsync();
+            }
+            // achievement unlocked -> do nothing
         }
     }
 }

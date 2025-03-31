@@ -3,6 +3,7 @@ using server.src;
 using server.UserNamespace;
 using System.Security.Claims;
 using server.src.Task3;
+using server.src.Achievements;
 
 namespace server.Controller {
     [Route("api")]
@@ -11,9 +12,12 @@ namespace server.Controller {
     public class Task3Controller : ControllerBase {
         private readonly FlashDbContext _context;
         private readonly UserHandler _userHandler;
-        public Task3Controller(FlashDbContext context, UserHandler userHandler) {
+        private readonly AchievementService _achievementService; 
+        
+        public Task3Controller(FlashDbContext context, UserHandler userHandler, AchievementService achievementService) {
             _context = context;
             _userHandler = userHandler;
+            _achievementService = achievementService;
         }
         [HttpPost("CheckSecretDoorCode")]
         public Task3EndpointHandler<Task3DoorCodeResponse> PostGetTask(Task3EndpointHandler<Task3DoorCodeRequest> req) {
@@ -39,6 +43,8 @@ namespace server.Controller {
             if (string.IsNullOrEmpty(userEmail) == false) {
                 System.Console.WriteLine("Saving task result");
                 await _userHandler.SaveTaskResult(userEmail, 0, 3, score, null);
+                await _achievementService.CheckFirstGameAchievementAsync(userEmail);
+                await _achievementService.CheckGameModesAchievementAsync(userEmail, 3);
             }
             else {
                 return NotFound("failure");
